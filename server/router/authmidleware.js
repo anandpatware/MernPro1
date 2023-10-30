@@ -69,7 +69,7 @@ router.post("/signup", async (req, res) => {
     } else {
       res.status(422).json({ message: "data not saved" });
     }
-    console.log({ name, mobile }); //headers contetn type set to applciation/json to get data
+    // console.log({ name, mobile }); //headers contetn type set to applciation/json to get data
   } catch (err) {
     res.sendStatus(500).json({ message: "err" });
   }

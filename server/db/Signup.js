@@ -40,3 +40,4 @@ const model = new mongoose.model("signup", schema); //this is my collection base
 // doc1.save();
 
 export default model;
+// mongodb://lybl-stage:*****@18.190.49.204:27017/booking?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&directConnection=true&ssl=false
