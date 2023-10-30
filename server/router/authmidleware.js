@@ -85,14 +85,11 @@ router.post("/signup", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
+  console.log({ email, password });
   const data = await model.findOne({ email: email });
-  if (data != null) {
-    if (password === data.password) {
-      alert("login");
-    } else {
-      alert("wronf psd");
-    }
-  }
+  console.log(data);
+  console.log(data.name);
+  const isMatch = await bcrypt.compare(password, data.password);
 
   // if (!email || !password) {
   //   res.status(422).json({ message: "Fill in all required fields" });
@@ -103,17 +100,19 @@ router.post("/login", async (req, res) => {
   //     res.status(404).json({ message: "User not found" });
   //   }
   //   const isMatch = await bcrypt.compare(password, data.password);
-  //   if (isMatch) {
-  //     const token = await data.generateAuthToken();
-  //     res.cookie("jwttoken", token, {
-  //       expires: new Date(Date.now() + 100000),
-  //       httpOnly: true,
-  //     });
-  //     console.log(token);
-  //     res.status(200).json({ message: "Login successful" });
-  //   } else {
-  //     res.status(401).json({ message: "Invalid credientials" });
-  //   }
+  if (isMatch) {
+    const token = await data.generateAuthToken();
+    res.cookie("jwttoken", token, {
+      expires: new Date(Date.now() + 100000),
+      httpOnly: true,
+    });
+    console.log(token);
+    res.status(200).json({ message: "Login successful" });
+  } else {
+    console.log("invalid Creadentiasl");
+    res.status(401).json({ message: "Invalid credientials" });
+  }
+
   // } catch (err) {
   //   res.status(500).json({ message: "Internal server error" });
   // }
