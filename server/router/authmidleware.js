@@ -28,6 +28,14 @@ router.post("/signup", async (req, res) => {
   if (!name || !email || !mobile || !password) {
     return res.status(422).json({ message: "fill data completely" });
   }
+  try {
+    const { name, email, mobile, password } = req.body;
+    const user = new model({ name, email, mobile, password });
+    await user.save();
+    res.status(201).send("Signup successful!");
+  } catch (error) {
+    res.status(500).send("Signup failed. Please try again.");
+  }
   //-------with promises-----------
   //   model
   //     .findOne({ email: email })
@@ -55,51 +63,60 @@ router.post("/signup", async (req, res) => {
   //       console.log(err);
   //     });
   //-------with async await--------------
-  try {
-    const data = await model.findOne({ email: email });
-    if (data) {
-      res.status(201).json({ message: "user already exist" });
-    }
+  // try {
+  //   const data = await model.findOne({ email: email });
+  //   if (data) {
+  //     res.status(201).json({ message: "user already exist" });
+  //   }
 
-    const newUser = new model({ name, email, mobile, password });
+  //   const newUser = new model({ name, email, mobile, password });
 
-    const savedData = await newUser.save();
-    if (savedData) {
-      res.status(200).json({ message: "data saved sucessfully" });
-    } else {
-      res.status(422).json({ message: "data not saved" });
-    }
-    // console.log({ name, mobile }); //headers contetn type set to applciation/json to get data
-  } catch (err) {
-    res.sendStatus(500).json({ message: "err" });
-  }
+  //   const savedData = await newUser.save();
+  //   if (savedData) {
+  //     res.status(200).json({ message: "data saved sucessfully" });
+  //   } else {
+  //     res.status(422).json({ message: "data not saved" });
+  //   }
+  //   // console.log({ name, mobile }); //headers contetn type set to applciation/json to get data
+  // } catch (err) {
+  //   res.sendStatus(500).json({ message: "err" });
+  // }
 });
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) {
-    res.status(422).json({ message: "Fill in all required fields" });
-  }
-  try {
-    const data = await model.findOne({ email: email });
-    if (!data) {
-      res.status(404).json({ message: "User not found" });
-    }
-    const isMatch = await bcrypt.compare(password, data.password);
-    if (isMatch) {
-      const token = await data.generateAuthToken();
-      res.cookie("jwttoken", token, {
-        expires: new Date(Date.now() + 100000),
-        httpOnly: true,
-      });
-      console.log(token);
-      res.status(200).json({ message: "Login successful" });
+  const data = await model.findOne({ email: email });
+  if (data != null) {
+    if (password === data.password) {
+      alert("login");
     } else {
-      res.status(401).json({ message: "Invalid credientials" });
+      alert("wronf psd");
     }
-  } catch (err) {
-    res.status(500).json({ message: "Internal server error" });
   }
+
+  // if (!email || !password) {
+  //   res.status(422).json({ message: "Fill in all required fields" });
+  // }
+  // try {
+  //   const data = await model.findOne({ email: email });
+  //   if (!data) {
+  //     res.status(404).json({ message: "User not found" });
+  //   }
+  //   const isMatch = await bcrypt.compare(password, data.password);
+  //   if (isMatch) {
+  //     const token = await data.generateAuthToken();
+  //     res.cookie("jwttoken", token, {
+  //       expires: new Date(Date.now() + 100000),
+  //       httpOnly: true,
+  //     });
+  //     console.log(token);
+  //     res.status(200).json({ message: "Login successful" });
+  //   } else {
+  //     res.status(401).json({ message: "Invalid credientials" });
+  //   }
+  // } catch (err) {
+  //   res.status(500).json({ message: "Internal server error" });
+  // }
 });
 
 export default router;
