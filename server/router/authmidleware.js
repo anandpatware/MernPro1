@@ -1,26 +1,46 @@
 import express from "express";
 import model from "../db/Signup.js";
 import bcrypt from "bcrypt";
+
 const router = express.Router();
+import pkg from "jsonwebtoken";
 
-const middleware = (req, res, next) => {
-  console.log(
-    "it will check if person is login or before rendering any route "
-  );
-  next();
+const { jwt } = pkg;
+
+const middleware = async (req, res, next) => {
+  try {
+    const token = req.cookies.jwt;
+    console.log("Token received:", token);
+
+    const verifytoken = jwt.verify(token, process.env.SECRET_KEY);
+    console.log("Verified token:", verifytoken);
+
+    const user = await model.findOne({
+      _id: verifytoken._id,
+      "tokens.token": token,
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    req.token = token;
+    req.user = user;
+    req.userId = user._id;
+
+    next();
+  } catch (err) {
+    res.status(401).send("Unauthorized: No token sent");
+    console.error(err);
+  }
 };
-router.get("/", (req, res) => {
-  res.send("kisrnvkien");
-});
-router.get("/about", middleware, async (req, res) => {
-  //middleware is used to show or do things                                                    vefore  reendering the about page
-  const data = await model.find();
-  console.log(data);
-  res.send(data);
-});
 
-router.get("/contact", (req, res) => {
-  res.send("this is contac us page");
+router.get("/about", middleware, async (req, res) => {
+  try {
+    res.send(req.user);
+  } catch (error) {
+    res.status(500).send("Internal server error");
+  }
 });
 
 router.post("/signup", async (req, res) => {
@@ -90,6 +110,20 @@ router.post("/login", async (req, res) => {
   console.log(data);
   console.log(data.name);
   const isMatch = await bcrypt.compare(password, data.password);
+  if (isMatch) {
+    const token = await data.generateAuthToken();
+    console.log(token + "from isMatch");
+
+    res.cookie("jwt", token, {
+      expires: new Date(Date.now() + 25800),
+      httpOnly: true,
+    });
+
+    res.status(200).json({ message: "Login successful" });
+  } else {
+    console.log("invalid Creadentiasl");
+    res.status(401).json({ message: "Invalid credientials" });
+  }
 
   // if (!email || !password) {
   //   res.status(422).json({ message: "Fill in all required fields" });
@@ -100,18 +134,6 @@ router.post("/login", async (req, res) => {
   //     res.status(404).json({ message: "User not found" });
   //   }
   //   const isMatch = await bcrypt.compare(password, data.password);
-  if (isMatch) {
-    const token = await data.generateAuthToken();
-    res.cookie("jwttoken", token, {
-      expires: new Date(Date.now() + 100000),
-      httpOnly: true,
-    });
-    console.log(token);
-    res.status(200).json({ message: "Login successful" });
-  } else {
-    console.log("invalid Creadentiasl");
-    res.status(401).json({ message: "Invalid credientials" });
-  }
 
   // } catch (err) {
   //   res.status(500).json({ message: "Internal server error" });
